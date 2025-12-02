@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Empréstimo na Diária</title>
+    <style>
+      :root {
+        --bg: #050608;
+        --bg-card: #11131a;
+        --bg-card-soft: #181b24;
+        --primary: #23c55e;
+        --primary-soft: rgba(34, 197, 94, 0.12);
+        --text: #f9fafb;
+        --text-soft: #9ca3af;
+        --border: #1f2933;
+        --accent: #38bdf8;
+        --danger: #f97373;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+      }
+
+      .shell {
+        position: relative;
+        width: 100%;
+        max-width: 960px;
+        border-radius: 32px;
+        padding: 1px;
+        background: radial-gradient(circle at top left, #22c55e, transparent 55%),
+          radial-gradient(circle at bottom right, #0ea5e9, transparent 55%);
+      }
+
+      .shell::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(
+          135deg,
+          rgba(148, 163, 184, 0.45),
+          rgba(15, 23, 42, 0.9)
+        );
+        -webkit-mask: linear-gradient(#000 0 0) content-box,
+          linear-gradient(#000 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        opacity: 0.6;
+      }
+
+      .card {
+        position: relative;
+        border-radius: 30px;
+        background: radial-gradient(circle at top left, #020617 0, #020617 50%, #020617 100%);
+        overflow: hidden;
+        padding: 32px 24px;
+        display: flex;
+        isolation: isolate;
+      }
+
+      @media (max-width: 768px) {
+        .shell {
+          border-radius: 24px;
+        }
+
+        .card {
+          padding: 24px 18px;
+        }
+      }
+
+      .noise {
+        position: absolute;
+        inset: 0;
+        opacity: 0.08;
+        pointer-events: none;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.7'/%3E%3C/svg%3E");
+        mix-blend-mode: soft-light;
+      }
+
+      .badge-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 18px;
+        flex-wrap: wrap;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        font-size: 11px;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: var(--text-soft);
+      }
+
+      .badge-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: var(--primary);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.9);
+      }
+
+      .headline {
+        font-size: clamp(28px, 3.4vw, 36px);
+        line-height: 1.15;
+        font-weight: 800;
+        margin-bottom: 14px;
+        text-align: center;
+        text-transform: uppercase;
+      }
+
+      .headline span {
+        background: linear-gradient(120deg, #22c55e, #a3e635);
+        -webkit-background-clip: text;
+        color: transparent;
+      }
+
+      .subheadline {
+        font-size: 14px;
+        line-height: 1.5;
+        color: var(--text-soft);
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.45);
+        color: var(--text-soft);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        margin-bottom: 18px;
+      }
+
+      .pill span {
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+
+      .offer {
+        border-radius: 16px;
+        padding: 14px 14px 12px;
+        background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.16), #020617);
+        border: 1px solid rgba(34, 197, 94, 0.35);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .offer.is-alt {
+        background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.1), #020617);
+        border-color: rgba(148, 163, 184, 0.7);
+      }
+
+      .offer-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--text-soft);
+      }
+
+      .offer-value {
+        font-size: 22px;
+        font-weight: 800;
+      }
+
+      .offer-tag {
+        font-size: 15px;
+        font-weight: 700;
+        color: #e5e7eb;
+        text-transform: none;
+        letter-spacing: 0.02em;
+      }
+
+      .bullet-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px;
+      }
+
+      .bullet {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 41, 55, 0.9);
+        background: rgba(15, 23, 42, 0.9);
+        font-size: 11px;
+        color: var(--text-soft);
+      }
+
+      .bullet svg {
+        width: 12px;
+        height: 12px;
+        color: var(--primary);
+      }
+
+      .cta-area {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .cta-main {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .btn-primary {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 20px;
+        border-radius: 999px;
+        border: none;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 14px;
+        color: #020617;
+        background: linear-gradient(135deg, #22c55e, #a3e635);
+        box-shadow: 0 12px 30px rgba(34, 197, 94, 0.38);
+        text-decoration: none;
+        transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
+        white-space: nowrap;
+      }
+
+      .btn-primary span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-primary svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-1px) scale(1.01);
+        box-shadow: 0 18px 40px rgba(34, 197, 94, 0.5);
+        filter: brightness(1.02);
+      }
+
+      .btn-primary:active {
+        transform: translateY(0) scale(0.99);
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.32);
+      }
+
+      .cta-tagline {
+        font-size: 11px;
+        color: var(--text-soft);
+      }
+
+      .cta-tagline span {
+        color: var(--primary);
+        font-weight: 600;
+      }
+
+      .aside {
+        position: relative;
+        border-radius: 22px;
+        background: radial-gradient(circle at top left, rgba(34, 197, 94, 0.18), #020617);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        padding: 18px 16px 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow: hidden;
+      }
+
+      .aside-tag {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        color: var(--text-soft);
+      }
+
+      .aside-title {
+        font-size: 18px;
+        font-weight: 600;
+        line-height: 1.3;
+      }
+
+      .aside-title span {
+        color: var(--primary);
+      }
+
+      .aside-list {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .aside-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-soft);
+      }
+
+      .aside-item-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.9);
+      }
+
+      .aside-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 11px;
+        color: var(--text-soft);
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 4px;
+      }
+
+      .aside-chip {
+        padding: 4px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(55, 65, 81, 0.9);
+        background: rgba(15, 23, 42, 0.9);
+        font-size: 11px;
+      }
+
+      .gradient-orb {
+        position: absolute;
+        width: 180px;
+        height: 180px;
+        border-radius: 999px;
+        background: radial-gradient(circle, rgba(34, 197, 94, 0.18), transparent 65%);
+        top: -60px;
+        right: -80px;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="shell" aria-label="Oferta de empréstimo na diária">
+      <section class="card">
+        <div class="noise" aria-hidden="true"></div>
+
+        <div style="width: 100%;">
+          <div class="badge-row">
+            <div class="badge">
+              <span class="badge-dot"></span>
+              LP • Empréstimo Rápido
+            </div>
+          </div>
+
+          <h1 class="headline">
+            EMPRÉSTIMO NA DIÁRIA<br />
+            SEM <span>TAXA ANTECIPADA</span>
+          </h1>
+
+          <p class="subheadline">
+            Condições pensadas para MOTORISTAS DE APP E ENTREGADORES que recebem por dia.
+            Análise rápida, oferta transparente e contratação simplificada.
+          </p>
+
+          <div class="pill">
+            Até <span>15x</span> no pagamento • Sem juros escondidos
+          </div>
+
+          <div class="grid" aria-label="Simulações de empréstimo">
+            <article class="offer" aria-label="Empréstimo de 300 dólares">
+              <div class="offer-label">Simulação</div>
+              <div class="offer-value">300$</div>
+              <div class="offer-tag">15x de 35 na diária</div>
+            </article>
+
+            <article class="offer is-alt" aria-label="Empréstimo de 500 dólares">
+              <div class="offer-label">Simulação</div>
+              <div class="offer-value">500$</div>
+              <div class="offer-tag">15x de 60 na diária</div>
+            </article>
+          </div>
+
+          <div class="bullet-row">
+            <div class="bullet">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M16.667 5 8.125 13.542 4.167 9.583"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Sem taxa antecipada
+            </div>
+            <div class="bullet">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M16.667 5 8.125 13.542 4.167 9.583"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Aprovação em poucos minutos*
+            </div>
+            <div class="bullet">
+              <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                <path
+                  d="M16.667 5 8.125 13.542 4.167 9.583"
+                  stroke="currentColor"
+                  stroke-width="1.7"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Atendimento humano, sem robô
+            </div>
+          </div>
+
+          <div class="cta-area">
+            <div class="cta-main">
+              <!-- REGIÃO / ATENDENTE 1 -->
+              <a
+                href="https://wa.me/5571997424418"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-primary"
+              >
+                <span>Atendente 1</span>
+                <span aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M5 10h10M10 5l5 5-5 5"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </a>
+
+              <!-- REGIÃO / ATENDENTE 2 -->
+              <a
+                href="https://wa.me/5571996368168"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="btn-primary"
+              >
+                <span>Atendente 2</span>
+                <span aria-hidden="true">
+                  <svg viewBox="0 0 20 20" fill="none">
+                    <path
+                      d="M5 10h10M10 5l5 5-5 5"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
+
+
